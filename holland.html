@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>霍兰德职业兴趣测试 - 免费在线测评</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+  display: flex; justify-content: center; align-items: center;
+  padding: 20px;
+}
+.container {
+  background: #fff;
+  border-radius: 20px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+  max-width: 700px; width: 100%;
+  padding: 40px;
+  position: relative;
+  overflow: hidden;
+}
+/* 页面切换 */
+.page { display: none; }
+.page.active { display: block; }
+
+/* 首页 */
+.welcome { text-align: center; }
+.welcome h1 {
+  font-size: 28px; color: #333; margin-bottom: 10px;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.welcome .subtitle { color: #888; font-size: 14px; margin-bottom: 30px; }
+.types-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+  margin-bottom: 30px;
+}
+.type-card {
+  background: #f8f9ff; border-radius: 12px; padding: 16px 10px;
+  text-align: center; transition: transform 0.2s;
+}
+.type-card:hover { transform: translateY(-2px); }
+.type-card .icon { font-size: 28px; margin-bottom: 6px; }
+.type-card .code { font-weight: bold; color: #667eea; font-size: 16px; }
+.type-card .name { font-size: 11px; color: #888; margin-top: 2px; }
+.start-btn {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: #fff; border: none; padding: 14px 60px;
+  border-radius: 50px; font-size: 18px; cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.start-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(102,126,234,0.4); }
+
+/* 进度条 */
+.progress-wrap { margin-bottom: 25px; }
+.progress-text { display: flex; justify-content: space-between; color: #888; font-size: 13px; margin-bottom: 6px; }
+.progress-bar {
+  height: 8px; background: #eee; border-radius: 4px; overflow: hidden;
+}
+.progress-fill {
+  height: 100%; background: linear-gradient(90deg, #667eea, #764ba2);
+  border-radius: 4px; transition: width 0.3s;
+}
+
+/* 题目区 */
+.question-wrap { min-height: 200px; }
+.question-num { color: #667eea; font-size: 13px; font-weight: bold; margin-bottom: 8px; }
+.question-text {
+  font-size: 18px; color: #333; line-height: 1.6; margin-bottom: 24px;
+}
+.options { display: flex; flex-direction: column; gap: 10px; }
+.option {
+  padding: 14px 20px; border: 2px solid #e8e8e8; border-radius: 12px;
+  cursor: pointer; transition: all 0.2s; font-size: 15px; color: #555;
+  display: flex; align-items: center; gap: 10px;
+}
+.option:hover { border-color: #667eea; background: #f8f9ff; }
+.option.selected { border-color: #667eea; background: #ede7f6; color: #333; font-weight: 500; }
+.option .dot {
+  width: 20px; height: 20px; border-radius: 50%; border: 2px solid #ccc;
+  flex-shrink: 0; transition: all 0.2s;
+}
+.option.selected .dot { border-color: #667eea; background: #667eea; }
+.nav-buttons { display: flex; justify-content: space-between; margin-top: 28px; }
+.nav-btn {
+  padding: 10px 28px; border-radius: 25px; border: none;
+  font-size: 15px; cursor: pointer; transition: all 0.2s;
+}
+.btn-prev { background: #f0f0f0; color: #666; }
+.btn-prev:hover { background: #e0e0e0; }
+.btn-next { background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; }
+.btn-next:hover { transform: translateY(-1px); box-shadow: 0 4px 15px rgba(102,126,234,0.4); }
+.btn-next:disabled { background: #ccc; cursor: not-allowed; box-shadow: none; transform: none; }
+
+/* 结果页 */
+.result-wrap { text-align: center; }
+.result-wrap h2 { font-size: 24px; color: #333; margin-bottom: 6px; }
+.result-code {
+  font-size: 36px; font-weight: bold;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  margin-bottom: 20px;
+}
+.chart-container { position: relative; width: 300px; height: 300px; margin: 0 auto 30px; }
+.scores-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 25px; }
+.score-item {
+  background: #f8f9ff; border-radius: 10px; padding: 12px 8px; text-align: center;
+}
+.score-item .letter { font-weight: bold; color: #667eea; font-size: 18px; }
+.score-item .type-name { font-size: 11px; color: #888; margin-top: 2px; }
+.score-item .value { font-size: 14px; color: #333; margin-top: 4px; font-weight: 500; }
+.section-title { font-size: 16px; color: #555; margin-bottom: 12px; text-align: left; font-weight: bold; }
+.career-list { text-align: left; margin-bottom: 20px; }
+.career-item {
+  background: #f8f9ff; border-radius: 10px; padding: 14px 18px;
+  margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;
+}
+.career-item .field { font-weight: 500; color: #333; }
+.career-item .match { font-size: 12px; color: #667eea; background: #ede7f6; padding: 3px 10px; border-radius: 12px; }
+.restart-btn {
+  background: #f0f0f0; color: #666; border: none; padding: 12px 40px;
+  border-radius: 25px; font-size: 15px; cursor: pointer; margin-top: 10px; transition: all 0.2s;
+}
+.restart-btn:hover { background: #e0e0e0; }
+.hidden { display: none; }
+
+@media (max-width: 600px) {
+  .container { padding: 24px 16px; border-radius: 14px; }
+  .welcome h1 { font-size: 22px; }
+  .types-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .scores-grid { grid-template-columns: repeat(2, 1fr); }
+  .chart-container { width: 240px; height: 240px; }
+  .result-code { font-size: 28px; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- ===== 首页 ===== -->
+  <div class="page active" id="page-welcome">
+    <div class="welcome">
+      <h1>🎯 霍兰德职业兴趣测试</h1>
+      <p class="subtitle">Holland Career Interest Test · 免费在线测评</p>
+      <div class="types-grid">
+        <div class="type-card"><div class="icon">🔧</div><div class="code">R</div><div class="name">现实型</div></div>
+        <div class="type-card"><div class="icon">🔬</div><div class="code">I</div><div class="name">研究型</div></div>
+        <div class="type-card"><div class="icon">🎨</div><div class="code">A</div><div class="name">艺术型</div></div>
+        <div class="type-card"><div class="icon">🤝</div><div class="code">S</div><div class="name">社会型</div></div>
+        <div class="type-card"><div class="icon">💼</div><div class="code">E</div><div class="name">企业型</div></div>
+        <div class="type-card"><div class="icon">📊</div><div class="code">C</div><div class="name">常规型</div></div>
+      </div>
+      <p style="color:#888;font-size:13px;margin-bottom:20px;">共60题 · 约8-12分钟 · 完全免费 · 无需注册</p>
+      <button class="start-btn" onclick="startTest()">开始测试</button>
+    </div>
+  </div>
+
+  <!-- ===== 答题页 ===== -->
+  <div class="page" id="page-quiz">
+    <div class="progress-wrap">
+      <div class="progress-text"><span id="progress-label">第 1/60 题</span><span id="progress-pct">0%</span></div>
+      <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+    </div>
+    <div class="question-wrap">
+      <div class="question-num" id="q-num"></div>
+      <div class="question-text" id="q-text"></div>
+      <div class="options" id="options"></div>
+    </div>
+    <div class="nav-buttons">
+      <button class="nav-btn btn-prev" id="btn-prev" onclick="prevQuestion()">← 上一题</button>
+      <button class="nav-btn btn-next" id="btn-next" onclick="nextQuestion()">下一题 →</button>
+    </div>
+  </div>
+
+  <!-- ===== 结果页 ===== -->
+  <div class="page" id="page-result">
+    <div class="result-wrap">
+      <h2>你的霍兰德代码</h2>
+      <div class="result-code" id="result-code"></div>
+      <p style="color:#888;margin-bottom:20px;">得分最高的三个类型组合</p>
+      <div class="chart-container">
+        <canvas id="radarChart" width="300" height="300"></canvas>
+      </div>
+      <div class="scores-grid" id="scores-grid"></div>
+      <div class="section-title">📋 适合你的专业与职业方向</div>
+      <div class="career-list" id="career-list"></div>
+      <button class="restart-btn" onclick="restart()">🔄 重新测试</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ========== 题库 ==========
+// 每类型10题，共60题。R=现实型 I=研究型 A=艺术型 S=社会型 E=企业型 C=常规型
+const questions = [
+  // R 现实型 (1-10)
+  { id:1,  type:'R', text:'我喜欢动手修理家里的东西，比如换灯泡、修桌椅。' },
+  { id:2,  type:'R', text:'我对机械、工具或交通工具很感兴趣。' },
+  { id:3,  type:'R', text:'我喜欢户外活动，比如种花、养宠物或徒步。' },
+  { id:4,  type:'R', text:'我能看懂简单的电路图或组装图纸。' },
+  { id:5,  type:'R', text:'我喜欢自己动手做东西，比如木工、模型。' },
+  { id:6,  type:'R', text:'比起和人打交道，我更愿意和机器或工具打交道。' },
+  { id:7,  type:'R', text:'我能熟练使用常见的五金工具。' },
+  { id:8,  type:'R', text:'我喜欢运动类的、需要身体协调的活动。' },
+  { id:9,  type:'R', text:'做菜、烘焙或者做手工让我有成就感。' },
+  { id:10, type:'R', text:'我对驾驶汽车、操作设备感兴趣。' },
+
+  // I 研究型 (11-20)
+  { id:11, type:'I', text:'我喜欢思考抽象的问题，比如"为什么会这样"。' },
+  { id:12, type:'I', text:'我对数学、物理或化学这类学科很感兴趣。' },
+  { id:13, type:'I', text:'遇到问题时，我会先查资料、分析原因再动手。' },
+  { id:14, type:'I', text:'我喜欢看科普纪录片或阅读科学类的文章。' },
+  { id:15, type:'I', text:'做实验、验证假设让我觉得很兴奋。' },
+  { id:16, type:'I', text:'我能长时间专注地研究一个复杂的问题。' },
+  { id:17, type:'I', text:'我对编程、数据分析或人工智能很感兴趣。' },
+  { id:18, type:'I', text:'我喜欢独立完成任务，不太需要和别人讨论。' },
+  { id:19, type:'I', text:'做决定之前，我倾向于收集充分的数据。' },
+  { id:20, type:'I', text:'我对医学、生物学或环境科学有好奇心。' },
+
+  // A 艺术型 (21-30)
+  { id:21, type:'A', text:'我喜欢画画、设计、拍照或做手工艺术。' },
+  { id:22, type:'A', text:'我对色彩搭配、空间布局有比较强的直觉。' },
+  { id:23, type:'A', text:'我喜欢写作、写日记或创作故事。' },
+  { id:24, type:'A', text:'听音乐或者演奏乐器是我生活中重要的一部分。' },
+  { id:25, type:'A', text:'我不喜欢被条条框框限制，喜欢自由发挥。' },
+  { id:26, type:'A', text:'参观美术馆、看展览或看演出让我很享受。' },
+  { id:27, type:'A', text:'我的想象力丰富，经常有新的创意和点子。' },
+  { id:28, type:'A', text:'我觉得美感和创意比实用更重要。' },
+  { id:29, type:'A', text:'我喜欢用不同的方式表达自己，比如穿搭、布置房间。' },
+  { id:30, type:'A', text:'相比重复性的工作，我更喜欢需要创造力的任务。' },
+
+  // S 社会型 (31-40)
+  { id:31, type:'S', text:'我喜欢帮助别人解决问题或困惑。' },
+  { id:32, type:'S', text:'朋友遇到困难时，他们经常来找我倾诉。' },
+  { id:33, type:'S', text:'我对教育、培训或心理咨询类的工作很感兴趣。' },
+  { id:34, type:'S', text:'在团队中，我善于协调关系、化解矛盾。' },
+  { id:35, type:'S', text:'我愿意花时间做志愿服务或帮助弱势群体。' },
+  { id:36, type:'S', text:'我善于倾听，能理解别人的感受和需求。' },
+  { id:37, type:'S', text:'教别人学会一样东西让我很有成就感。' },
+  { id:38, type:'S', text:'我喜欢和人打交道，而不是和机器或数据。' },
+  { id:39, type:'S', text:'参加社交活动、社团组织让我很开心。' },
+  { id:40, type:'S', text:'我认为帮助他人成长是一件很有意义的事。' },
+
+  // E 企业型 (41-50)
+  { id:41, type:'E', text:'我喜欢在团队中担任组织者或领导者的角色。' },
+  { id:42, type:'E', text:'我有说服别人接受我想法的能力。' },
+  { id:43, type:'E', text:'我对商业、创业或管理类的事情很感兴趣。' },
+  { id:44, type:'E', text:'我愿意为了达成目标承担风险和压力。' },
+  { id:45, type:'E', text:'我喜欢竞争，赢了会让我特别有成就感。' },
+  { id:46, type:'E', text:'我对赚钱、理财和投资有自己的想法。' },
+  { id:47, type:'E', text:'在讨论中，我经常扮演发言人或推动者的角色。' },
+  { id:48, type:'E', text:'我善于制定目标并推动大家一起去实现。' },
+  { id:49, type:'E', text:'我觉得人脉和社交资源非常重要。' },
+  { id:50, type:'E', text:'我喜欢公开演讲、主持会议或做展示。' },
+
+  // C 常规型 (51-60)
+  { id:51, type:'C', text:'我喜欢把东西整理得井井有条，按分类放好。' },
+  { id:52, type:'C', text:'我做事情喜欢有计划、有流程，不喜欢混乱。' },
+  { id:53, type:'C', text:'我对数字、表格和数据处理不排斥甚至喜欢。' },
+  { id:54, type:'C', text:'我会认真核对细节，确保不出错。' },
+  { id:55, type:'C', text:'我认为遵守规则和流程比灵活变通更重要。' },
+  { id:56, type:'C', text:'我对会计、档案管理或行政类工作感兴趣。' },
+  { id:57, type:'C', text:'我喜欢按照明确的时间表和计划做事。' },
+  { id:58, type:'C', text:'我的书桌、电脑文件夹通常整理得很整齐。' },
+  { id:59, type:'C', text:'我能耐心地完成重复性的、需要细致的工作。' },
+  { id:60, type:'C', text:'把信息归档、分类、整理是我的强项。' },
+];
+
+// 选项
+const options = [
+  { value:5, label:'非常符合', desc:'完全描述了我' },
+  { value:4, label:'比较符合', desc:'大部分时候是这样' },
+  { value:3, label:'一般', desc:'有时这样，有时不这样' },
+  { value:2, label:'不太符合', desc:'大部分时候不是这样' },
+  { value:1, label:'非常不符合', desc:'完全不像我' },
+];
+
+// ========== 状态 ==========
+let currentQ = 0;
+let answers = {};   // { questionId: value }
+let selectedValue = null;
+
+// ========== 页面切换 ==========
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// ========== 开始测试 ==========
+function startTest() {
+  currentQ = 0;
+  answers = {};
+  selectedValue = null;
+  showPage('page-quiz');
+  renderQuestion();
+}
+
+// ========== 渲染题目 ==========
+function renderQuestion() {
+  const q = questions[currentQ];
+  selectedValue = answers[q.id] || null;
+
+  document.getElementById('q-num').textContent = `第 ${currentQ + 1} / ${questions.length} 题 · ${getTypeName(q.type)}`;
+  document.getElementById('q-text').textContent = q.text;
+  document.getElementById('progress-label').textContent = `第 ${currentQ+1}/${questions.length} 题`;
+  document.getElementById('progress-pct').textContent = Math.round((currentQ/questions.length)*100) + '%';
+  document.getElementById('progress-fill').style.width = (currentQ/questions.length)*100 + '%';
+
+  const optsDiv = document.getElementById('options');
+  optsDiv.innerHTML = '';
+  options.forEach(opt => {
+    const div = document.createElement('div');
+    div.className = 'option' + (selectedValue === opt.value ? ' selected' : '');
+    div.innerHTML = `<span class="dot"></span><span><b>${opt.label}</b><span style="color:#aaa;font-size:12px;margin-left:6px;">${opt.desc}</span></span>`;
+    div.onclick = () => selectOption(opt.value);
+    optsDiv.appendChild(div);
+  });
+
+  document.getElementById('btn-prev').style.visibility = currentQ === 0 ? 'hidden' : 'visible';
+  const btnNext = document.getElementById('btn-next');
+  btnNext.textContent = currentQ === questions.length - 1 ? '查看结果 🎉' : '下一题 →';
+  btnNext.disabled = !selectedValue;
+}
+
+function selectOption(value) {
+  selectedValue = value;
+  answers[questions[currentQ].id] = value;
+  document.querySelectorAll('.option').forEach(el => {
+    el.classList.remove('selected');
+    if (el.querySelector('b') && el.querySelector('b').textContent === options.find(o=>o.value===value).label) {
+      el.classList.add('selected');
+    }
+  });
+  // 更可靠的选中判断
+  document.querySelectorAll('.option').forEach((el, i) => {
+    el.classList.toggle('selected', options[i].value === value);
+  });
+  document.getElementById('btn-next').disabled = false;
+}
+
+function nextQuestion() {
+  if (currentQ < questions.length - 1) {
+    currentQ++;
+    renderQuestion();
+  } else {
+    showResults();
+  }
+}
+
+function prevQuestion() {
+  if (currentQ > 0) {
+    currentQ--;
+    renderQuestion();
+  }
+}
+
+// ========== 计算结果显示 ==========
+function showResults() {
+  // 计算六维分数
+  const scores = { R:0, I:0, A:0, S:0, E:0, C:0 };
+  const counts = { R:0, I:0, A:0, S:0, E:0, C:0 };
+  for (const [qId, val] of Object.entries(answers)) {
+    const q = questions.find(q => q.id === parseInt(qId));
+    if (q) { scores[q.type] += val; counts[q.type]++; }
+  }
+  // 归一化到百分制
+  for (const t of ['R','I','A','S','E','C']) {
+    scores[t] = counts[t] > 0 ? Math.round((scores[t] / (counts[t] * 5)) * 100) : 0;
+  }
+
+  // 排名前三
+  const sorted = Object.entries(scores).sort((a,b) => b[1] - a[1]);
+  const top3 = sorted.slice(0, 3).map(s => s[0]).join('');
+  document.getElementById('result-code').textContent = top3;
+
+  // 雷达图
+  drawRadar(scores);
+
+  // 分数格子
+  const grid = document.getElementById('scores-grid');
+  grid.innerHTML = '';
+  const typeInfo = { R:['现实型','🔧'], I:['研究型','🔬'], A:['艺术型','🎨'], S:['社会型','🤝'], E:['企业型','💼'], C:['常规型','📊'] };
+  for (const t of ['R','I','A','S','E','C']) {
+    grid.innerHTML += `
+      <div class="score-item">
+        <div class="letter">${typeInfo[t][1]} ${t}</div>
+        <div class="type-name">${typeInfo[t][0]}</div>
+        <div class="value">${scores[t]} 分</div>
+      </div>`;
+  }
+
+  // 职业推荐
+  const careers = getCareerRecommendations(scores);
+  const list = document.getElementById('career-list');
+  list.innerHTML = careers.map(c => `
+    <div class="career-item">
+      <span><span style="margin-right:6px;">${c.icon}</span><span class="field">${c.field}</span></span>
+      <span class="match">${c.level}</span>
+    </div>
+  `).join('');
+
+  showPage('page-result');
+}
+
+// ========== 雷达图 ==========
+function drawRadar(scores) {
+  const canvas = document.getElementById('radarChart');
+  const ctx = canvas.getContext('2d');
+  const w = canvas.width, h = canvas.height;
+  const cx = w/2, cy = h/2, r = 110;
+  const types = ['R','I','A','S','E','C'];
+  const labels = ['现实型 R','研究型 I','艺术型 A','社会型 S','企业型 E','常规型 C'];
+
+  ctx.clearRect(0,0,w,h);
+
+  // 背景网格
+  for (let i=1; i<=5; i++) {
+    ctx.beginPath();
+    for (let j=0; j<6; j++) {
+      const angle = Math.PI*2/6*j - Math.PI/2;
+      const rr = r * i/5;
+      const x = cx + rr * Math.cos(angle);
+      const y = cy + rr * Math.sin(angle);
+      j===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+    }
+    ctx.closePath();
+    ctx.strokeStyle = i===5 ? '#ddd' : '#eee';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+
+  // 轴线
+  for (let i=0; i<6; i++) {
+    const angle = Math.PI*2/6*i - Math.PI/2;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(cx + r*Math.cos(angle), cy + r*Math.sin(angle));
+    ctx.strokeStyle = '#e0e0e0';
+    ctx.stroke();
+  }
+
+  // 数据区
+  ctx.beginPath();
+  for (let i=0; i<6; i++) {
+    const val = scores[types[i]] / 100;
+    const angle = Math.PI*2/6*i - Math.PI/2;
+    const x = cx + r*val*Math.cos(angle);
+    const y = cy + r*val*Math.sin(angle);
+    i===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+  }
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(102,126,234,0.25)';
+  ctx.fill();
+  ctx.strokeStyle = '#667eea';
+  ctx.lineWidth = 2.5;
+  ctx.stroke();
+
+  // 数据点
+  for (let i=0; i<6; i++) {
+    const val = scores[types[i]] / 100;
+    const angle = Math.PI*2/6*i - Math.PI/2;
+    const x = cx + r*val*Math.cos(angle);
+    const y = cy + r*val*Math.sin(angle);
+    ctx.beginPath();
+    ctx.arc(x, y, 5, 0, Math.PI*2);
+    ctx.fillStyle = '#667eea';
+    ctx.fill();
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
+
+  // 标签
+  ctx.fillStyle = '#333';
+  ctx.font = 'bold 13px "Microsoft YaHei", sans-serif';
+  ctx.textAlign = 'center';
+  for (let i=0; i<6; i++) {
+    const angle = Math.PI*2/6*i - Math.PI/2;
+    const lr = r + 28;
+    const x = cx + lr*Math.cos(angle);
+    const y = cy + lr*Math.sin(angle) + 4;
+    ctx.fillText(labels[i], x, y);
+  }
+
+  // 分数标签
+  ctx.fillStyle = '#667eea';
+  ctx.font = 'bold 11px "Microsoft YaHei", sans-serif';
+  for (let i=0; i<6; i++) {
+    const val = scores[types[i]] / 100;
+    const angle = Math.PI*2/6*i - Math.PI/2;
+    const sr = r*val + 16;
+    const x = cx + sr*Math.cos(angle);
+    const y = cy + sr*Math.sin(angle) + 3;
+    ctx.fillText(scores[types[i]]+'分', x, y);
+  }
+}
+
+// ========== 职业推荐 ==========
+function getCareerRecommendations(scores) {
+  const sorted = Object.entries(scores).sort((a,b) => b[1]-a[1]);
+  const topTypes = sorted.slice(0,3).map(s=>s[0]);
+  const topType = topTypes[0];
+
+  // 根据首要类型推荐专业和职业
+  const careerMap = {
+    'R': [
+      {icon:'🔧', field:'机械工程 / 机械设计制造及其自动化', level:'高度匹配'},
+      {icon:'⚡', field:'电气工程及其自动化', level:'高度匹配'},
+      {icon:'🏗️', field:'土木工程 / 建筑工程', level:'高度匹配'},
+      {icon:'🚗', field:'车辆工程 / 交通运输', level:'推荐'},
+      {icon:'🌿', field:'农学 / 园林 / 动物医学', level:'推荐'},
+      {icon:'🛠️', field:'材料科学与工程 / 焊接技术', level:'推荐'},
+    ],
+    'I': [
+      {icon:'💻', field:'计算机科学与技术 / 软件工程', level:'高度匹配'},
+      {icon:'🧬', field:'生物科学 / 生物技术', level:'高度匹配'},
+      {icon:'⚗️', field:'化学 / 应用化学 / 化工', level:'高度匹配'},
+      {icon:'🔬', field:'临床医学 / 基础医学 / 药学', level:'推荐'},
+      {icon:'📐', field:'数学 / 统计学 / 数据科学', level:'推荐'},
+      {icon:'🌍', field:'物理学 / 环境科学 / 地质学', level:'推荐'},
+    ],
+    'A': [
+      {icon:'🎨', field:'视觉传达设计 / 环境设计', level:'高度匹配'},
+      {icon:'✏️', field:'工业设计 / 产品设计', level:'高度匹配'},
+      {icon:'📝', field:'汉语言文学 / 新闻传播学', level:'高度匹配'},
+      {icon:'🎵', field:'音乐学 / 音乐表演 / 作曲', level:'推荐'},
+      {icon:'🏛️', field:'建筑学 / 风景园林', level:'推荐'},
+      {icon:'🎬', field:'影视编导 / 数字媒体艺术', level:'推荐'},
+    ],
+    'S': [
+      {icon:'📚', field:'教育学 / 小学教育 / 学前教育', level:'高度匹配'},
+      {icon:'🧠', field:'心理学 / 应用心理学 / 心理咨询', level:'高度匹配'},
+      {icon:'🤲', field:'社会工作 / 社会学', level:'高度匹配'},
+      {icon:'🏥', field:'护理学 / 康复治疗学', level:'推荐'},
+      {icon:'🗣️', field:'人力资源管理 / 公共管理', level:'推荐'},
+      {icon:'🌏', field:'国际关系 / 公共事务', level:'推荐'},
+    ],
+    'E': [
+      {icon:'💼', field:'工商管理 / 市场营销', level:'高度匹配'},
+      {icon:'💰', field:'金融学 / 经济学 / 国际经济与贸易', level:'高度匹配'},
+      {icon:'⚖️', field:'法学 / 知识产权', level:'高度匹配'},
+      {icon:'🏨', field:'旅游管理 / 酒店管理', level:'推荐'},
+      {icon:'📢', field:'广告学 / 公共关系', level:'推荐'},
+      {icon:'🚀', field:'创业管理 / 电子商务', level:'推荐'},
+    ],
+    'C': [
+      {icon:'📊', field:'会计学 / 财务管理 / 审计学', level:'高度匹配'},
+      {icon:'📋', field:'行政管理 / 公共事业管理', level:'高度匹配'},
+      {icon:'💾', field:'信息管理与信息系统', level:'高度匹配'},
+      {icon:'📈', field:'统计学 / 经济统计学', level:'推荐'},
+      {icon:'🏦', field:'金融工程 / 保险学 / 精算', level:'推荐'},
+      {icon:'📁', field:'档案学 / 图书馆学', level:'推荐'},
+    ],
+  };
+
+  let results = careerMap[topType] || [];
+
+  // 如果有第二第三类型，补充推荐
+  if (topTypes.length >= 2) {
+    const second = careerMap[topTypes[1]];
+    if (second) results = results.concat(second.slice(0,2).map(s=>({...s, level:'辅助推荐'})));
+  }
+
+  return results.slice(0, 8);
+}
+
+function getTypeName(type) {
+  const map = { R:'现实型', I:'研究型', A:'艺术型', S:'社会型', E:'企业型', C:'常规型' };
+  return map[type] || type;
+}
+
+function restart() {
+  currentQ = 0;
+  answers = {};
+  selectedValue = null;
+  showPage('page-welcome');
+}
+</script>
+</body>
+</html>
