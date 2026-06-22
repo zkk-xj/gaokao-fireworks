@@ -46,10 +46,21 @@ canvas{display:block;position:fixed;top:0;left:0;z-index:1;touch-action:none}
 #stamp.show{opacity:0.85;transform:scale(1) rotate(-15deg)}
 #stamp svg{width:100%;height:100%}
 
-#music-btn{position:fixed;top:20px;right:20px;z-index:200;width:42px;height:42px;border-radius:50%;border:1.5px solid rgba(201,169,110,0.5);background:rgba(0,0,0,0.4);color:#c9a96e;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.3s}
-#music-btn:hover{border-color:#c9a96e;box-shadow:0 0 15px rgba(201,169,110,0.3)}
+#music-btn{
+  position:fixed;top:16px;right:16px;z-index:300;
+  width:50px;height:50px;border-radius:50%;
+  border:2px solid rgba(201,169,110,0.6);
+  background:rgba(0,0,0,0.55);color:#c9a96e;
+  font-size:22px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  touch-action:manipulation;
+  -webkit-tap-highlight-color:transparent;
+  user-select:none;-webkit-user-select:none;
+  transition:all 0.2s;
+}
+#music-btn:active{border-color:#f5e6cc;box-shadow:0 0 18px rgba(201,169,110,0.45);transform:scale(0.92)}
 #hint{position:fixed;bottom:22px;left:0;right:0;z-index:60;text-align:center;color:rgba(201,169,110,0.45);font-size:11px;letter-spacing:3px;pointer-events:none}
-@media(max-width:600px){#text-layer{padding:28px 16px 14px}#stamp{bottom:120px;right:15px;width:75px;height:75px}}
+@media(max-width:600px){#text-layer{padding:28px 16px 14px}#stamp{bottom:120px;right:15px;width:75px;height:75px}#music-btn{top:12px;right:12px;width:52px;height:52px}}
 </style>
 </head>
 <body>
@@ -351,7 +362,6 @@ function initAudio(){
   if(audioCtx.state==='suspended')audioCtx.resume();
 }
 
-// 简单风铃音色 —— 一个正弦波，干干净净
 function simpleTone(freq,time,dur,vol=0.05){
   if(!audioCtx||!musicPlaying)return;
   const now=audioCtx.currentTime+time;
@@ -367,11 +377,7 @@ function playMusic(){
   initAudio();if(musicPlaying)return;
   musicPlaying=true;musicBtn.textContent='🔊';
 
-  // 五声音阶高音区（风铃感）
   const s=[523,588,660,784,880,1047,1176,1319];
-  //        C5  D5  E5  G5  A5  C6   D6   E6
-
-  // 简单旋律 —— 轻轻飘着，不打扰看烟花
   const melody=[
     {n:1,d:0.6},{n:3,d:0.5},{n:5,d:0.7},{n:3,d:0.4},
     {n:2,d:0.5},{n:4,d:0.5},{n:6,d:0.7},{n:4,d:0.4},
@@ -412,21 +418,20 @@ overlay.addEventListener('click',(e)=>{
   for(let i=0;i<6;i++)setTimeout(()=>launch(Math.random()*W,H*0.2+Math.random()*H*0.35),i*450+600);
 });
 
-fwCanvas=document.getElementById('firework-canvas');
+const fwCanvas=document.getElementById('firework-canvas');
 const textLayer=document.getElementById('text-layer');
 let textScrolling=false,textStartY=0,textStartX=0;
+let touchActive=false; // 避免 pointer + touch 双重触发
 
 function inTextArea(cx,cy){
   const r=textLayer.getBoundingClientRect();
   return cy<r.bottom && cx>r.left && cx<r.right;
 }
 
-function startFire(e){
-  e.preventDefault();
-  const cx=e.clientX||(e.touches&&e.touches[0]&&e.touches[0].clientX);
-  const cy=e.clientY||(e.touches&&e.touches[0]&&e.touches[0].clientY);
+// 统一的烟花触发逻辑
+function handleFireStart(cx,cy){
   if(!cx||!cy)return;
-  // 触点在文字区域：先不点火，等判断是滑动还是点击
+  // 触点在文字区域：暂不点火，等待判断是滑动还是点击
   if(inTextArea(cx,cy)){
     textStartX=cx;textStartY=cy;textScrolling=true;
     return;
@@ -437,9 +442,8 @@ function startFire(e){
   if(fireI)clearInterval(fireI);
   fireI=setInterval(()=>{if(mouseDown)launch(mouseX+Math.random()*50-25,mouseY+Math.random()*50-25)},180);
 }
-function moveFire(e){
-  const cx=e.clientX||(e.touches&&e.touches[0]&&e.touches[0].clientX);
-  const cy=e.clientY||(e.touches&&e.touches[0]&&e.touches[0].clientY);
+
+function handleFireMove(cx,cy){
   if(!cx||!cy)return;
   if(textScrolling){
     const dy=cy-textStartY,dx=cx-textStartX;
@@ -460,13 +464,15 @@ function moveFire(e){
   if(!mouseDown)return;
   mouseX=cx;mouseY=cy;
 }
-function stopFire(e){
+
+function handleFireEnd(cx,cy){
   if(textScrolling){
-    // 轻触（没怎么滑）→ 放一个烟花
-    const cy=e.clientY||(e.changedTouches&&e.changedTouches[0]&&e.changedTouches[0].clientY);
+    // 轻触（没怎么滑）→ 在触点位置放一个烟花
     if(cy&&Math.abs(cy-textStartY)<8){
-      launch(textStartX||mouseX,cy);
-      spawnGold(textStartX||mouseX,cy,15);
+      const sx=textStartX||cx||mouseX;
+      const sy=cy||textStartY||mouseY;
+      launch(sx,sy);
+      spawnGold(sx,sy,15);
     }
     textScrolling=false;
     return;
@@ -475,20 +481,64 @@ function stopFire(e){
   if(fireI){clearInterval(fireI);fireI=null}
 }
 
-// Pointer 事件（桌面 + 部分移动端）
-fwCanvas.addEventListener('pointerdown',startFire);
-fwCanvas.addEventListener('pointermove',moveFire);
-fwCanvas.addEventListener('pointerup',stopFire);
-fwCanvas.addEventListener('pointercancel',stopFire);
-fwCanvas.addEventListener('pointerleave',(e)=>{if(!e.pointerType||e.pointerType!=='touch')stopFire(e)});
+// ---- Touch 事件（主力，移动端全靠它）----
+fwCanvas.addEventListener('touchstart',(e)=>{
+  touchActive=true;
+  e.preventDefault();
+  const t=e.touches[0];
+  if(t)handleFireStart(t.clientX,t.clientY);
+},{passive:false});
 
-// Touch 事件（兜底移动端）
-fwCanvas.addEventListener('touchstart',startFire,{passive:false});
-fwCanvas.addEventListener('touchmove',moveFire,{passive:false});
-fwCanvas.addEventListener('touchend',stopFire);
-fwCanvas.addEventListener('touchcancel',stopFire);
+fwCanvas.addEventListener('touchmove',(e)=>{
+  const t=e.touches[0];
+  if(t)handleFireMove(t.clientX,t.clientY);
+},{passive:false});
 
-musicBtn.addEventListener('click',()=>{initAudio();musicPlaying?stopMusic():playMusic()});
+fwCanvas.addEventListener('touchend',(e)=>{
+  const t=e.changedTouches[0];
+  handleFireEnd(t?t.clientX:null,t?t.clientY:null);
+  touchActive=false;
+});
+
+fwCanvas.addEventListener('touchcancel',(e)=>{
+  const t=e.changedTouches[0];
+  handleFireEnd(t?t.clientX:null,t?t.clientY:null);
+  touchActive=false;
+});
+
+// ---- Pointer 事件（桌面鼠标兜底，touch 激活时跳过）----
+fwCanvas.addEventListener('pointerdown',(e)=>{
+  if(touchActive||e.pointerType==='touch')return;
+  handleFireStart(e.clientX,e.clientY);
+});
+
+fwCanvas.addEventListener('pointermove',(e)=>{
+  if(touchActive||e.pointerType==='touch')return;
+  handleFireMove(e.clientX,e.clientY);
+});
+
+fwCanvas.addEventListener('pointerup',(e)=>{
+  if(e.pointerType==='touch')return;
+  handleFireEnd(e.clientX,e.clientY);
+});
+
+fwCanvas.addEventListener('pointercancel',(e)=>{
+  if(e.pointerType==='touch')return;
+  handleFireEnd(e.clientX,e.clientY);
+});
+
+fwCanvas.addEventListener('pointerleave',(e)=>{
+  if(e.pointerType==='touch')return;
+  handleFireEnd(e.clientX,e.clientY);
+});
+
+// ---- 音乐按钮 ----
+musicBtn.addEventListener('pointerdown',(e)=>{
+  e.stopPropagation();e.preventDefault();
+  initAudio();musicPlaying?stopMusic():playMusic();
+});
+
+// ---- 空格键放烟花 ----
 document.addEventListener('keydown',(e)=>{if(e.code==='Space'){e.preventDefault();launch(Math.random()*W*0.6+W*0.2,Math.random()*H*0.3+H*0.05)}});
 
 // ==================== 动画主循环 ====================
